@@ -7,6 +7,7 @@ struct TwinCreationView: View {
     @State private var analysisProgress: Double = 0
     @State private var twinProfile: TwinProfile?
     @State private var showingAnalysis = false
+    @State private var showingChatbot = false
     
     var body: some View {
         NavigationStack {
@@ -25,7 +26,7 @@ struct TwinCreationView: View {
                         .font(.largeTitle)
                         .fontWeight(.bold)
                     
-                    Text("Upload your ChatGPT conversations to build your AI persona")
+                    Text("Choose how to build your AI persona")
                         .font(.subheadline)
                         .foregroundColor(.secondary)
                         .multilineTextAlignment(.center)
@@ -34,11 +35,28 @@ struct TwinCreationView: View {
                 .padding(.top, 40)
                 
                 VStack(spacing: 16) {
+                    Button(action: { showingChatbot = true }) {
+                        Label("Chat with AI Assistant", systemImage: "message.fill")
+                            .frame(maxWidth: .infinity)
+                            .padding()
+                            .background(LinearGradient(
+                                colors: [.blue, .purple],
+                                startPoint: .leading,
+                                endPoint: .trailing
+                            ))
+                            .foregroundColor(.white)
+                            .cornerRadius(12)
+                    }
+                    
+                    Text("or")
+                        .foregroundColor(.secondary)
+                        .font(.subheadline)
+                    
                     Button(action: { isImporting = true }) {
                         Label("Upload ChatGPT Conversations", systemImage: "doc.badge.plus")
                             .frame(maxWidth: .infinity)
                             .padding()
-                            .background(Color.blue)
+                            .background(Color.blue.opacity(0.9))
                             .foregroundColor(.white)
                             .cornerRadius(12)
                     }
@@ -145,6 +163,9 @@ struct TwinCreationView: View {
                 case .failure(let error):
                     print("Error selecting files: \(error)")
                 }
+            }
+            .fullScreenCover(isPresented: $showingChatbot) {
+                ChatbotView()
             }
         }
     }
