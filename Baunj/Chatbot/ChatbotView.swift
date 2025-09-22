@@ -110,10 +110,33 @@ struct ChatbotView: View {
                             .font(.headline)
                         
                         Button("View Your Digital Twin") {
-                            if let profile = generatedProfile {
-                                // Navigate to profile view
-                                showingProfile = true
+                            // Force generate a profile if needed
+                            if generatedProfile == nil {
+                                let synthesizer = PersonalitySynthesizer()
+                                let context = ConversationContext(
+                                    currentQuestionIndex: QuestionBank.questions.count,
+                                    responses: conversationManager.conversationHistory
+                                        .filter { !$0.isBot }
+                                        .enumerated()
+                                        .map { index, message in
+                                            QuestionResponse(
+                                                questionId: index,
+                                                response: message.content,
+                                                responseTime: 5,
+                                                wordCount: message.content.split(separator: " ").count,
+                                                sentimentScore: 0,
+                                                emojiCount: 0,
+                                                punctuationStyle: .casual,
+                                                timestamp: message.timestamp
+                                            )
+                                        },
+                                    followUpQueue: [],
+                                    detectedPatterns: [],
+                                    mood: .neutral
+                                )
+                                generatedProfile = synthesizer.synthesize(from: context)
                             }
+                            showingProfile = true
                         }
                         .buttonStyle(.borderedProminent)
                         .tint(.purple)
@@ -142,11 +165,18 @@ struct ChatbotView: View {
                     generatedProfile = profile
                 }
             }
+            .onReceive(NotificationCenter.default.publisher(for: Notification.Name("DigitalTwinGenerated"))) { notification in
+                if let context = notification.userInfo?["context"] as? ConversationContext {
+                    // Show the AI-enhanced twin view
+                    showingProfile = true
+                }
+            }
             .sheet(isPresented: $showingProfile) {
                 if let profile = generatedProfile {
                     PersonalityProfileView(profile: profile)
                 }
             }
+            .checkAPIKey()
         }
     }
     

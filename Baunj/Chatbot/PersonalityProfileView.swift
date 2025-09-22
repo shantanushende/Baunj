@@ -133,10 +133,10 @@ struct OverviewSection: View {
                         Text(dimensionName(dimension))
                             .font(.subheadline)
                         Spacer()
-                        ProgressView(value: Double(value))
+                        ProgressView(value: Double(max(0, min(1, value.isNaN ? 0.5 : value))))
                             .frame(width: 100)
-                            .tint(colorForValue(value))
-                        Text("\(Int(value * 100))%")
+                            .tint(colorForValue(value.isNaN ? 0.5 : value))
+                        Text("\(Int((value.isNaN ? 0.5 : value) * 100))%")
                             .font(.caption)
                             .foregroundColor(.secondary)
                     }

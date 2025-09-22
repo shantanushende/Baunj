@@ -1,7 +1,10 @@
 import Foundation
 
 struct QuestionBank {
-    static let questions: [PersonalityQuestion] = [
+    // Reduced to 3 questions for testing - change back to allQuestions for full 10
+    static let questions: [PersonalityQuestion] = Array(allQuestions.prefix(3))
+    
+    static let allQuestions: [PersonalityQuestion] = [
         
         // Layer 1: Baseline Communication (Icebreakers)
         PersonalityQuestion(

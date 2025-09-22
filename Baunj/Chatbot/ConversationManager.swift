@@ -150,14 +150,32 @@ class ConversationManager: ObservableObject {
     }
     
     private func generatePersonalityProfile() {
+        // First generate basic profile
         let synthesizer = PersonalitySynthesizer()
-        let profile = synthesizer.synthesize(from: context)
+        let basicProfile = synthesizer.synthesize(from: context)
         
-        NotificationCenter.default.post(
-            name: Notification.Name("PersonalityProfileGenerated"),
-            object: nil,
-            userInfo: ["profile": profile]
-        )
+        // Then enhance with ChatGPT if API key is available
+        if APIConfiguration.shared.hasValidAPIKey() {
+            Task {
+                let generator = DigitalTwinGenerator()
+                await generator.generateTwin(from: context)
+                
+                await MainActor.run {
+                    NotificationCenter.default.post(
+                        name: Notification.Name("DigitalTwinGenerated"),
+                        object: nil,
+                        userInfo: ["context": context, "basicProfile": basicProfile]
+                    )
+                }
+            }
+        } else {
+            // Just use basic profile if no API key
+            NotificationCenter.default.post(
+                name: Notification.Name("PersonalityProfileGenerated"),
+                object: nil,
+                userInfo: ["profile": basicProfile]
+            )
+        }
     }
     
     func skipToNext() {

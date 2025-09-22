@@ -32,20 +32,38 @@ class PersonalitySynthesizer {
     private func calculateDimensions(from responses: [QuestionResponse]) -> [PersonalityDimension: Float] {
         var dimensions: [PersonalityDimension: Float] = [:]
         
+        guard !responses.isEmpty else {
+            // Return default values if no responses
+            return [
+                .formality: 0.5,
+                .emotionalExpression: 0.5,
+                .humor: 0.5,
+                .analyticalThinking: 0.5,
+                .empathy: 0.5,
+                .assertiveness: 0.5,
+                .openness: 0.5,
+                .optimism: 0.5,
+                .detailOrientation: 0.5,
+                .spontaneity: 0.5,
+                .conflictStyle: 0.5,
+                .socialEnergy: 0.5
+            ]
+        }
+        
         let avgWordCount = Float(responses.reduce(0) { $0 + $1.wordCount }) / Float(max(responses.count, 1))
-        dimensions[.detailOrientation] = min(avgWordCount / 50, 1.0)
+        dimensions[.detailOrientation] = min(max(0, avgWordCount / 50), 1.0)
         
         let avgSentiment = responses.reduce(0) { $0 + $1.sentimentScore } / Float(max(responses.count, 1))
-        dimensions[.optimism] = (avgSentiment + 1) / 2
+        dimensions[.optimism] = max(0, min(1, (avgSentiment + 1) / 2))
         
         let emojiTotal = responses.reduce(0) { $0 + $1.emojiCount }
-        dimensions[.emotionalExpression] = min(Float(emojiTotal) / Float(responses.count * 2), 1.0)
+        dimensions[.emotionalExpression] = min(max(0, Float(emojiTotal) / Float(max(responses.count * 2, 1))), 1.0)
         
         let formalCount = responses.filter { $0.punctuationStyle == .formal }.count
-        dimensions[.formality] = Float(formalCount) / Float(max(responses.count, 1))
+        dimensions[.formality] = max(0, min(1, Float(formalCount) / Float(max(responses.count, 1))))
         
         let questionCount = responses.filter { $0.response.contains("?") }.count
-        dimensions[.openness] = Float(questionCount) / Float(max(responses.count, 1))
+        dimensions[.openness] = max(0, min(1, Float(questionCount) / Float(max(responses.count, 1))))
         
         dimensions[.analyticalThinking] = calculateAnalyticalScore(from: responses)
         dimensions[.empathy] = calculateEmpathyScore(from: responses)
@@ -66,7 +84,7 @@ class PersonalitySynthesizer {
             score += Float(matches) / Float(analyticalWords.count)
         }
         
-        return min(score / Float(responses.count), 1.0)
+        return responses.isEmpty ? 0.5 : min(max(0, score / Float(responses.count)), 1.0)
     }
     
     private func calculateEmpathyScore(from responses: [QuestionResponse]) -> Float {
@@ -79,7 +97,7 @@ class PersonalitySynthesizer {
             score += Float(matches) / Float(empathyWords.count)
         }
         
-        return min(score / Float(responses.count), 1.0)
+        return responses.isEmpty ? 0.5 : min(max(0, score / Float(responses.count)), 1.0)
     }
     
     private func calculateAssertivenessScore(from responses: [QuestionResponse]) -> Float {
@@ -92,7 +110,7 @@ class PersonalitySynthesizer {
             score += Float(matches) / Float(assertiveWords.count)
         }
         
-        return min(score / Float(responses.count), 1.0)
+        return responses.isEmpty ? 0.5 : min(max(0, score / Float(responses.count)), 1.0)
     }
     
     private func calculateSpontaneityScore(from responses: [QuestionResponse]) -> Float {
@@ -104,7 +122,7 @@ class PersonalitySynthesizer {
             if response.emojiCount > 0 { score += 0.1 }
         }
         
-        return min(score / Float(responses.count), 1.0)
+        return responses.isEmpty ? 0.5 : min(max(0, score / Float(responses.count)), 1.0)
     }
     
     private func calculateHumorScore(from responses: [QuestionResponse]) -> Float {
@@ -117,7 +135,7 @@ class PersonalitySynthesizer {
             score += Float(min(matches, 3)) / 3.0
         }
         
-        return min(score / Float(responses.count), 1.0)
+        return responses.isEmpty ? 0.5 : min(max(0, score / Float(responses.count)), 1.0)
     }
     
     private func analyzeCommunicationStyle(from responses: [QuestionResponse]) -> CommunicationStyle {
